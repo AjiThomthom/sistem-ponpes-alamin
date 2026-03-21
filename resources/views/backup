@@ -1,0 +1,133 @@
+-- 1. Tabel: users (Admin/Pengurus)
+CREATE TABLE IF NOT EXISTS users (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NULL,
+    google_id VARCHAR(255) NULL UNIQUE,
+    remember_token VARCHAR(100) NULL,
+    
+    -- 7 Field Wajib Dosen
+    CreatedBy VARCHAR(255) NULL, 
+    CreatedDate DATETIME DEFAULT CURRENT_TIMESTAMP,
+    LastUpdatedBy VARCHAR(255) NULL, 
+    LastUpdatedDate DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CompanyCode VARCHAR(100) DEFAULT 'Pondok Pesantren Al-Amin Cikarang Utara', 
+    Status INT DEFAULT 1, 
+    IsDeleted INT DEFAULT 0
+) ENGINE=InnoDB;
+
+-- 2. Tabel: mst_santri (Data Induk)
+-- Berdasarkan MstSantri.php, PK adalah 'nis', dan ada SoftDeletes (DeletedDate, DeletedBy)
+CREATE TABLE IF NOT EXISTS mst_santri (
+    nis VARCHAR(50) PRIMARY KEY,
+    nama_santri VARCHAR(255) NOT NULL,
+    tempat_lahir VARCHAR(100) NULL,
+    tanggal_lahir DATE NULL,
+    kelas VARCHAR(50) NULL,
+    no_hp_santri VARCHAR(20) NULL,
+    no_hp_wali VARCHAR(20) NULL,
+    email VARCHAR(255) NULL,
+    status_santri ENUM('aktif', 'lulus', 'takzir', 'keluar') DEFAULT 'aktif',
+    
+    -- Keperluan SoftDeletes
+    DeletedBy VARCHAR(255) NULL,
+    DeletedDate DATETIME NULL,
+
+    -- 7 Field Wajib Dosen
+    CreatedBy VARCHAR(255) NULL, 
+    CreatedDate DATETIME DEFAULT CURRENT_TIMESTAMP,
+    LastUpdatedBy VARCHAR(255) NULL, 
+    LastUpdatedDate DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CompanyCode VARCHAR(100) DEFAULT 'Pondok Pesantren Al-Amin Cikarang Utara', 
+    Status INT DEFAULT 1, 
+    IsDeleted INT DEFAULT 0
+) ENGINE=InnoDB;
+
+-- 3. Tabel: trx_tagihan_spp (Pembayaran)
+-- Berdasarkan TrxTagihanSpp.php, PK adalah 'id_tagihan'
+CREATE TABLE IF NOT EXISTS trx_tagihan_spp (
+    id_tagihan BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    nis VARCHAR(50), -- Relasi ke mst_santri
+    bulan VARCHAR(20) NOT NULL, 
+    tahun INT NOT NULL, 
+    nominal DECIMAL(15,2) NOT NULL, 
+    status_pembayaran ENUM('LUNAS', 'PENDING', 'BELUM LUNAS') DEFAULT 'BELUM LUNAS',
+    tanggal_lunas DATETIME NULL,
+    
+    -- 7 Field Wajib Dosen
+    CreatedBy VARCHAR(255) NULL, 
+    CreatedDate DATETIME DEFAULT CURRENT_TIMESTAMP,
+    LastUpdatedBy VARCHAR(255) NULL, 
+    LastUpdatedDate DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CompanyCode VARCHAR(100) DEFAULT 'Pondok Pesantren Al-Amin Cikarang Utara', 
+    Status INT DEFAULT 1, 
+    IsDeleted INT DEFAULT 0,
+    
+    FOREIGN KEY (nis) REFERENCES mst_santri(nis) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- 4. Tabel: cms_materi_pustaka (E-Learning)
+-- Berdasarkan CmsMateriPustaka.php, PK adalah 'id'
+CREATE TABLE IF NOT EXISTS cms_materi_pustaka (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id_user BIGINT UNSIGNED NULL, 
+    judul_materi VARCHAR(200) NOT NULL, 
+    slug_url VARCHAR(255) NOT NULL, 
+    kategori ENUM('Modul', 'Artikel', 'Pengumuman') NOT NULL,
+    gambar_cover VARCHAR(255) NULL,
+    isi_konten LONGTEXT NOT NULL,
+    link_google_drive TEXT NULL,
+    
+    -- 7 Field Wajib Dosen
+    CreatedBy VARCHAR(255) NULL, 
+    CreatedDate DATETIME DEFAULT CURRENT_TIMESTAMP,
+    LastUpdatedBy VARCHAR(255) NULL, 
+    LastUpdatedDate DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CompanyCode VARCHAR(100) DEFAULT 'Pondok Pesantren Al-Amin Cikarang Utara', 
+    Status INT DEFAULT 1, 
+    IsDeleted INT DEFAULT 0,
+    
+    FOREIGN KEY (id_user) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- 5. Tabel: trx_voucher_wifi (Layanan Internet)
+-- Berdasarkan TrxVoucherWifi.php, PK adalah 'id_transaksi'
+CREATE TABLE IF NOT EXISTS trx_voucher_wifi (
+    id_transaksi BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    nis VARCHAR(50) NULL, -- Siapa yang beli (opsional)
+    kode_voucher VARCHAR(50) UNIQUE NOT NULL, 
+    paket ENUM('Harian', 'Mingguan', 'Bulanan') NOT NULL, 
+    harga INT NOT NULL, 
+    is_used TINYINT(1) DEFAULT 0,
+    
+    -- 7 Field Wajib Dosen
+    CreatedBy VARCHAR(255) NULL, 
+    CreatedDate DATETIME DEFAULT CURRENT_TIMESTAMP,
+    LastUpdatedBy VARCHAR(255) NULL, 
+    LastUpdatedDate DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CompanyCode VARCHAR(100) DEFAULT 'Pondok Pesantren Al-Amin Cikarang Utara', 
+    Status INT DEFAULT 1, 
+    IsDeleted INT DEFAULT 0,
+
+    FOREIGN KEY (nis) REFERENCES mst_santri(nis) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- 6. Tabel: trx_buku_kas (Keuangan Pesantren)
+-- Berdasarkan TrxBukuKas.php, PK adalah 'id_kas'
+CREATE TABLE IF NOT EXISTS trx_buku_kas (
+    id_kas BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    jenis_transaksi ENUM('Pemasukan', 'Pengeluaran') NOT NULL,
+    keterangan VARCHAR(255) NOT NULL,
+    tanggal DATE NOT NULL,
+    nominal DECIMAL(15,2) NOT NULL,
+    
+    -- 7 Field Wajib Dosen
+    CreatedBy VARCHAR(255) NULL, 
+    CreatedDate DATETIME DEFAULT CURRENT_TIMESTAMP,
+    LastUpdatedBy VARCHAR(255) NULL, 
+    LastUpdatedDate DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CompanyCode VARCHAR(100) DEFAULT 'Pondok Pesantren Al-Amin Cikarang Utara', 
+    Status INT DEFAULT 1, 
+    IsDeleted INT DEFAULT 0
+) ENGINE=InnoDB;
