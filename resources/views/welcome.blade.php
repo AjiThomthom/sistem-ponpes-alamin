@@ -1,14 +1,6 @@
 <!DOCTYPE html>
 <html lang="id" 
-    x-data="{ 
-        darkMode: localStorage.getItem('theme') === 'dark', 
-        mobileMenuOpen: false, 
-        chatOpen: false, 
-        modalOpen: false, 
-        modalName: '', 
-        modalImg: '', 
-        profilModalOpen: false 
-    }" 
+    x-data="appData()" 
     x-init="$watch('darkMode', val => localStorage.setItem('theme', val ? 'dark' : 'light'))"
     :class="{ 'dark': darkMode }" 
     class="scroll-smooth">
@@ -431,7 +423,8 @@
             </div>
         </div>
         <div class="border-t border-gray-800 pt-8 text-center text-sm text-gray-500">
-            <p>© 2026 Pondok Pesantren Al-Amin. Didesain dan Dikembangkan oleh Aji.</p>
+            <p>© 2026 Pondok Pesantren Al-Amin.</p>
+            <p>Powered by PonpesProjects</p>
         </div>
     </footer>
 
@@ -497,18 +490,34 @@
                 <button @click="chatOpen = false" class="text-white/70 hover:text-white transition-colors focus:outline-none"><i class="fa-solid fa-xmark text-2xl"></i></button>
             </div>
             
-            <div class="p-5 bg-gray-50 dark:bg-gray-800/50 h-72 overflow-y-auto space-y-4 text-base">
-                <div class="flex items-start space-x-3">
-                    <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0 text-white text-xs"><i class="fa-solid fa-robot"></i></div>
-                    <div class="bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 p-4 rounded-2xl rounded-tl-sm shadow-sm border border-gray-100 dark:border-gray-600">
-                        Assalamu'alaikum! Ahlan wa Sahlan di portal Ponpes Al-Amin. Ada yang bisa kami bantu hari ini?
+            <div x-ref="chatContainer" class="p-5 bg-gray-50 dark:bg-gray-800/50 h-72 overflow-y-auto space-y-4 text-base scroll-smooth">
+                <template x-for="(msg, index) in messages" :key="index">
+                    <div class="flex items-start space-x-3" :class="msg.sender === 'user' ? 'flex-row-reverse space-x-reverse' : ''">
+                        
+                        <div x-show="msg.sender === 'bot'" class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0 text-white text-xs shadow-sm">
+                            <i class="fa-solid fa-robot"></i>
+                        </div>
+
+                        <div class="p-4 rounded-2xl shadow-sm max-w-[85%] text-sm leading-relaxed"
+                             :class="msg.sender === 'user' 
+                                ? 'bg-primary text-white rounded-tr-sm border border-emerald-700' 
+                                : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-100 dark:border-gray-600 rounded-tl-sm'"
+                             x-html="msg.text">
+                        </div>
                     </div>
-                </div>
+                </template>
             </div>
             
             <div class="p-4 bg-white dark:bg-darkcard border-t dark:border-gray-700 flex items-center space-x-3">
-                <input type="text" placeholder="Ketik pesan..." class="w-full bg-gray-100 dark:bg-gray-800 dark:text-white border-transparent focus:border-primary focus:bg-white dark:focus:bg-gray-700 rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all">
-                <button class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center hover:bg-emerald-700 transition-colors shadow-md shrink-0"><i class="fa-solid fa-paper-plane"></i></button>
+                <input type="text" 
+                       x-model="newMessage"
+                       @keydown.enter="sendMessage()"
+                       placeholder="Ketik pesan..." 
+                       class="w-full bg-gray-100 dark:bg-gray-800 dark:text-white border-transparent focus:border-primary focus:bg-white dark:focus:bg-gray-700 rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all">
+                <button @click="sendMessage()" 
+                        class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center hover:bg-emerald-700 transition-colors shadow-md shrink-0 focus:outline-none">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
             </div>
         </div>
 
@@ -522,6 +531,62 @@
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
         AOS.init({ once: true, offset: 50, duration: 1200, easing: 'ease-out-cubic' });
+
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('appData', () => ({
+                darkMode: localStorage.getItem('theme') === 'dark', 
+                mobileMenuOpen: false, 
+                chatOpen: false, 
+                modalOpen: false, 
+                modalName: '', 
+                modalImg: '', 
+                profilModalOpen: false,
+
+                newMessage: '',
+                messages: [
+                    { 
+                        sender: 'bot', 
+                        text: 'اَلسَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللهِ وَبَرَكَاتُهُ<br>Selamat datang di Website Ponpes Al-Amin. Ada yang bisa kami bantu hari ini?' 
+                    }
+                ],
+
+                scrollToBottom() {
+                    setTimeout(() => {
+                        const container = this.$refs.chatContainer;
+                        if(container) container.scrollTop = container.scrollHeight;
+                    }, 50);
+                },
+
+                sendMessage() {
+                    if (this.newMessage.trim() === '') return;
+
+                    const userText = this.newMessage;
+                    this.messages.push({ sender: 'user', text: userText });
+                    this.newMessage = ''; 
+                    this.scrollToBottom();
+
+                    setTimeout(() => {
+                        const textLower = userText.toLowerCase();
+                        let botReply = 'Maaf, saya belum mengerti pertanyaan tersebut. Silakan hubungi Ust. Faisal di nomor +62 857-7335-3921 untuk informasi lebih akurat.';
+
+                        if (textLower.includes('spp') || textLower.includes('tagihan') || textLower.includes('bayar')) {
+                            botReply = 'Untuk mengecek atau membayar tagihan SPP, silakan klik menu <strong>Cek Tagihan SPP</strong> di bagian Layanan Digital, atau langsung login ke portal admin.';
+                        } else if (textLower.includes('daftar') || textLower.includes('pendaftaran') || textLower.includes('masuk')) {
+                            botReply = 'Pendaftaran santri baru saat ini dapat dilakukan dengan datang langsung ke sekertariat Ponpes Al-Amin di Jl. Industri Kp. Sempu Gardu.';
+                        } else if (textLower.includes('assalamualaikum') || textLower.includes('salam') || textLower.includes('halo') || textLower.includes('hai')) {
+                            botReply = 'Waalaikumsalam warahmatullahi wabarakatuh. Ada yang ingin ditanyakan seputar kegiatan atau layanan Ponpes Al-Amin?';
+                        } else if (textLower.includes('wifi') || textLower.includes('internet') || textLower.includes('voucher')) {
+                            botReply = 'Untuk pembelian voucher Wi-Fi (Harian/Mingguan/Bulanan), santri bisa langsung membelinya melalui pengurus pondok di asrama.';
+                        } else if (textLower.includes('ustadz') || textLower.includes('guru') || textLower.includes('kyai')) {
+                            botReply = 'Ponpes Al-Amin dibina langsung oleh Drs. KH Hasyim Al-Ihsan dan dewan asatidz lainnya. Anda bisa melihat profil lengkapnya di bagian "Dewan Asatidz" pada halaman utama ini.';
+                        }
+
+                        this.messages.push({ sender: 'bot', text: botReply });
+                        this.scrollToBottom();
+                    }, 1000);
+                }
+            }))
+        })
     </script>
 </body>
 </html>
