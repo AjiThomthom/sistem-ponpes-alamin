@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Filament\Resources\CmsMateriPustakaResource\Pages;
+namespace App\Filament\Resources\CmsJadwalPengajianResource\Pages;
 
-use App\Filament\Resources\CmsMateriPustakaResource;
+use App\Filament\Resources\CmsJadwalPengajianResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 
-class EditCmsMateriPustaka extends EditRecord
+class EditCmsJadwalPengajian extends EditRecord
 {
-    protected static string $resource = CmsMateriPustakaResource::class;
+    protected static string $resource = CmsJadwalPengajianResource::class;
 
     protected function getHeaderActions(): array
     {
@@ -16,7 +16,6 @@ class EditCmsMateriPustaka extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
-
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');
@@ -24,6 +23,6 @@ class EditCmsMateriPustaka extends EditRecord
 
     protected function getSavedNotificationTitle(): ?string
     {
-        return 'Perubahan materi berhasil disimpan! ✅';
+        return 'Data Jadwal berhasil diupdate! ✨';
     }
 }

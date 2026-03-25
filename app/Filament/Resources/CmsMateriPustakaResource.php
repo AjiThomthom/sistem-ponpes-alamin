@@ -10,6 +10,9 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class CmsMateriPustakaResource extends Resource
 {
@@ -24,42 +27,58 @@ class CmsMateriPustakaResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Hidden::make('id_user')
-                    ->default(fn () => auth()->id()),
-                    
-                Forms\Components\TextInput::make('judul_materi')
-                    ->label('Judul Materi')
-                    ->required()
-                    ->maxLength(200)
-                    ->live(onBlur: true)
-                    ->afterStateUpdated(fn (string $operation, $state, Forms\Set $set) => 
-                        $operation === 'create' ? $set('slug_url', Str::slug($state)) : null
-                    ),
-                Forms\Components\TextInput::make('slug_url')
-                    ->label('Slug URL (Otomatis)')
-                    ->required()
-                    ->maxLength(255)
-                    ->readOnly(),
-                Forms\Components\Select::make('kategori')
-                    ->label('Kategori Konten')
-                    ->options([
-                        'Modul' => 'Modul Belajar',
-                        'Artikel' => 'Artikel Umum',
-                        'Pengumuman' => 'Pengumuman Penting',
+                Forms\Components\Section::make('Informasi Utama')
+                    ->schema([
+                        Forms\Components\Hidden::make('id_user')
+                            ->default(fn () => auth()->id()),
+                            
+                        Forms\Components\TextInput::make('judul_materi')
+                            ->label('Judul Materi')
+                            ->required()
+                            ->maxLength(200)
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(fn (string $operation, $state, Forms\Set $set) => 
+                                $operation === 'create' ? $set('slug_url', Str::slug($state)) : null
+                            ),
+                        Forms\Components\TextInput::make('slug_url')
+                            ->label('Slug URL (Otomatis)')
+                            ->required()
+                            ->maxLength(255)
+                            ->readOnly(),
+                        Forms\Components\Select::make('kategori')
+                            ->label('Kategori Konten')
+                            ->options([
+                                'Modul' => 'Modul Belajar',
+                                'Artikel' => 'Artikel Umum',
+                                'Pengumuman' => 'Pengumuman Penting',
+                            ])
+                            ->required(),
+                        Forms\Components\Toggle::make('is_published')
+                            ->label('Publikasikan Ke Web?')
+                            ->default(true)
+                            ->onColor('success'),
+                    ])->columns(2),
+
+                Forms\Components\Section::make('Konten & Media')
+                    ->schema([
+                        Forms\Components\FileUpload::make('gambar_cover')
+                            ->label('Gambar Cover / Thumbnail')
+                            ->image()
+                            ->directory('materi-covers')
+                            ->columnSpanFull(),
+                        
+                        Forms\Components\TextInput::make('link_google_drive')
+                            ->label('Link Download (GDrive/PDF External)')
+                            ->url()
+                            ->placeholder('https://drive.google.com/...')
+                            ->columnSpanFull(),
+
+                        Forms\Components\RichEditor::make('isi_konten')
+                            ->label('Isi Konten Materi')
+                            ->required()
+                            ->fileAttachmentsDirectory('materi-attachments')
+                            ->columnSpanFull(),
                     ])
-                    ->required(),
-                Forms\Components\TextInput::make('link_google_drive')
-                    ->label('Link Google Drive / Dokumen Tambahan')
-                    ->url()
-                    ->maxLength(500),
-                Forms\Components\FileUpload::make('gambar_cover')
-                    ->label('Gambar Cover / Thumbnail')
-                    ->image()
-                    ->directory('materi-covers'),
-                Forms\Components\RichEditor::make('isi_konten')
-                    ->label('Isi Konten')
-                    ->required()
-                    ->columnSpanFull(),
             ]);
     }
 
@@ -69,11 +88,12 @@ class CmsMateriPustakaResource extends Resource
             ->columns([
                 Tables\Columns\ImageColumn::make('gambar_cover')
                     ->label('Cover')
-                    ->circular(),
+                    ->square(),
                 Tables\Columns\TextColumn::make('judul_materi')
                     ->label('Judul')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->wrap(),
                 Tables\Columns\TextColumn::make('kategori')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
@@ -82,14 +102,43 @@ class CmsMateriPustakaResource extends Resource
                         'Modul' => 'success',
                         default => 'gray',
                     }),
+                Tables\Columns\IconColumn::make('is_published')
+                    ->label('Status')
+                    ->boolean(),
                 Tables\Columns\TextColumn::make('CreatedDate')
                     ->label('Dibuat')
                     ->dateTime('d M Y')
                     ->sortable(),
             ])
-            ->filters([])
+            ->headerActions([
+                ExportAction::make('export')
+                    ->label('Ekspor Excel')
+                    ->color('success')
+                    ->icon('heroicon-o-arrow-down-tray'),
+            ])
+            ->filters([
+                Tables\Filters\SelectFilter::make('kategori')
+                    ->options([
+                        'Modul' => 'Modul',
+                        'Artikel' => 'Artikel',
+                        'Pengumuman' => 'Pengumuman',
+                    ]),
+                Tables\Filters\TernaryFilter::make('is_published')
+                    ->label('Status Publikasi'),
+            ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                // Fitur Tambahan: Cetak Materi untuk dibagikan ke santri secara fisik
+                Tables\Actions\Action::make('cetak_materi')
+                    ->label('Cetak Materi')
+                    ->color('warning')
+                    ->icon('heroicon-o-printer')
+                    ->action(function (CmsMateriPustaka $record) {
+                        $pdf = Pdf::loadView('pdf.cetak-materi', ['record' => $record]);
+                        return response()->streamDownload(function () use ($pdf) {
+                            echo $pdf->output();
+                        }, 'Materi-' . $record->slug_url . '.pdf');
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -97,8 +146,6 @@ class CmsMateriPustakaResource extends Resource
                 ]),
             ]);
     }
-
-    public static function getRelations(): array { return []; }
 
     public static function getPages(): array
     {

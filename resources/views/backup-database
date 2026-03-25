@@ -131,3 +131,65 @@ CREATE TABLE IF NOT EXISTS trx_buku_kas (
     Status INT DEFAULT 1, 
     IsDeleted INT DEFAULT 0
 ) ENGINE=InnoDB;
+
+
+-- 1. TABEL UNTUK DATA DEWAN ASATIDZ
+CREATE TABLE IF NOT EXISTS mst_asatidz (
+    id_asatidz BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    nama_lengkap VARCHAR(255) NOT NULL,
+    jabatan VARCHAR(100) NOT NULL,
+    foto_profile VARCHAR(255) NULL,
+    
+    -- 7 Field Wajib Dosen
+    CreatedBy VARCHAR(255) NULL, 
+    CreatedDate DATETIME DEFAULT CURRENT_TIMESTAMP,
+    LastUpdatedBy VARCHAR(255) NULL, 
+    LastUpdatedDate DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CompanyCode VARCHAR(100) DEFAULT 'Pondok Pesantren Al-Amin Cikarang Utara', 
+    Status INT DEFAULT 1, 
+    IsDeleted INT DEFAULT 0
+) ENGINE=InnoDB;
+
+-- 2. TABEL UNTUK JADWAL PENGAJIAN
+CREATE TABLE IF NOT EXISTS cms_jadwal_pengajian (
+    id_jadwal BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    kategori ENUM('Harian', 'Tingkatan Ibtida', 'Tingkatan Tsanawi', 'Umum') NOT NULL,
+    hari_atau_waktu VARCHAR(100) NOT NULL,
+    materi_atau_kitab VARCHAR(255) NOT NULL,
+    pengajar_id BIGINT UNSIGNED NULL, -- Bisa dikosongkan jika pengajarnya bergantian
+    
+    -- 7 Field Wajib Dosen
+    CreatedBy VARCHAR(255) NULL, 
+    CreatedDate DATETIME DEFAULT CURRENT_TIMESTAMP,
+    LastUpdatedBy VARCHAR(255) NULL, 
+    LastUpdatedDate DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CompanyCode VARCHAR(100) DEFAULT 'Pondok Pesantren Al-Amin Cikarang Utara', 
+    Status INT DEFAULT 1, 
+    IsDeleted INT DEFAULT 0,
+
+    FOREIGN KEY (pengajar_id) REFERENCES mst_asatidz(id_asatidz) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+ALTER TABLE `cms_materi_pustaka` 
+ADD `is_published` TINYINT(1) NOT NULL DEFAULT '1' AFTER `kategori`;
+
+CREATE TABLE `notifications` (
+    `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+    `type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+    `notifiable_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+    `notifiable_id` bigint(20) unsigned NOT NULL,
+    `data` text COLLATE utf8mb4_unicode_ci NOT NULL,
+    `read_at` timestamp NULL DEFAULT NULL,
+
+  /* 7 FIELD FARDHU AIN DOSEN */
+    `CreatedBy` varchar(100) DEFAULT 'System',
+    `CreatedDate` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+    `LastUpdatedBy` varchar(100) DEFAULT NULL,
+    `LastUpdatedDate` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+    `CompanyCode` varchar(20) DEFAULT 'AL-AMIN',
+    `Status` tinyint(1) DEFAULT '1',
+    `IsDeleted` tinyint(1) DEFAULT '0',
+
+PRIMARY KEY (`id`),
+    KEY `notifications_notifiable_type_notifiable_id_index` (`notifiable_type`,`notifiable_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

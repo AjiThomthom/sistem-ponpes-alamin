@@ -17,6 +17,6 @@ class CreateTrxVoucherWifi extends CreateRecord
 
     protected function getCreatedNotificationTitle(): ?string
     {
-        return 'Sip! Voucher Wi-Fi berhasil di-generate 📶';
+        return 'Voucher Wi-Fi berhasil di-generate! 🎉';
     }
 }

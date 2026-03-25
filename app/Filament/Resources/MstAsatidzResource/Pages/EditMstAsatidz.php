@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Filament\Resources\CmsMateriPustakaResource\Pages;
+namespace App\Filament\Resources\MstAsatidzResource\Pages;
 
-use App\Filament\Resources\CmsMateriPustakaResource;
+use App\Filament\Resources\MstAsatidzResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 
-class EditCmsMateriPustaka extends EditRecord
+class EditMstAsatidz extends EditRecord
 {
-    protected static string $resource = CmsMateriPustakaResource::class;
+    protected static string $resource = MstAsatidzResource::class;
 
     protected function getHeaderActions(): array
     {
@@ -16,7 +16,6 @@ class EditCmsMateriPustaka extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
-
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');
@@ -24,6 +23,6 @@ class EditCmsMateriPustaka extends EditRecord
 
     protected function getSavedNotificationTitle(): ?string
     {
-        return 'Perubahan materi berhasil disimpan! ✅';
+        return 'Data Asatidz berhasil diupdate! ✨';
     }
 }

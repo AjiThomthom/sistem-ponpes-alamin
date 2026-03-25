@@ -17,6 +17,6 @@ class CreateTrxTagihanSpp extends CreateRecord
 
     protected function getCreatedNotificationTitle(): ?string
     {
-        return 'Tagihan SPP berhasil dicatat 💸';
+        return 'Tagihan SPP berhasil dicatat! 💸';
     }
 }

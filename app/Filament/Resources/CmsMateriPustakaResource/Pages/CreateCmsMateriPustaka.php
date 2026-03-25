@@ -17,6 +17,9 @@ class CreateCmsMateriPustaka extends CreateRecord
 
     protected function getCreatedNotificationTitle(): ?string
     {
-        return 'Mantap! Materi berhasil diterbitkan 🚀';
+        // Notifikasi cerdas: cek apakah is_published dicentang atau tidak
+        return $this->record->is_published 
+            ? 'Mantap! Materi berhasil diterbitkan 🚀' 
+            : 'Materi disimpan sebagai draft 📝';
     }
 }

@@ -22,6 +22,7 @@ class PemasukanSppChart extends ChartWidget
             $bulanTarget = Carbon::now()->subMonths($i);
             $labels[] = $bulanTarget->translatedFormat('M Y');
 
+            // Hitung SPP + Kas Masuk
             $sppBulanIni = TrxTagihanSpp::where('status_bayar', 'LUNAS')
                 ->whereYear('CreatedDate', $bulanTarget->year)
                 ->whereMonth('CreatedDate', $bulanTarget->month)
@@ -34,6 +35,7 @@ class PemasukanSppChart extends ChartWidget
 
             $pemasukanData[] = $sppBulanIni + $kasMasukBulanIni;
 
+            // Hitung Kas Keluar
             $pengeluaranData[] = TrxBukuKas::where('jenis', 'PENGELUARAN')
                 ->whereYear('tanggal', $bulanTarget->year)
                 ->whereMonth('tanggal', $bulanTarget->month)
@@ -43,19 +45,19 @@ class PemasukanSppChart extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label' => 'Pemasukan (+)',
+                    'label' => 'Total Pemasukan',
                     'data' => $pemasukanData,
-                    'borderColor' => '#10b981',
-                    'backgroundColor' => 'rgba(16, 185, 129, 0.2)',
-                    'fill' => true,
+                    'borderColor' => '#10b981', // Emerald 500
+                    'backgroundColor' => 'rgba(16, 185, 129, 0.1)',
+                    'fill' => 'start',
                     'tension' => 0.4,
                 ],
                 [
-                    'label' => 'Pengeluaran (-)',
+                    'label' => 'Total Pengeluaran',
                     'data' => $pengeluaranData,
-                    'borderColor' => '#ef4444',
-                    'backgroundColor' => 'rgba(239, 68, 68, 0.2)',
-                    'fill' => true,
+                    'borderColor' => '#f43f5e', // Rose 500
+                    'backgroundColor' => 'rgba(244, 63, 94, 0.1)',
+                    'fill' => 'start',
                     'tension' => 0.4,
                 ],
             ],
